@@ -35,10 +35,16 @@
 
         //////////
 
+        function dot(cnv, ctx, pt, radius) {
+            ctx.beginPath();
+            ctx.arc((1 + pt[0] / 2) * cnv.width / 2, (1 - pt[1] / 2) * cnv.height / 2, radius, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
         function triangle(cnv, ctx, pts, ignore=false) {
             var radius = 20;
             for (let i = 0; i < 3; i++) {
-                ctx.fillStyle=['red','green','blue'][i];
+                ctx.fillStyle=['magenta','green','blue'][i];
                 ctx.beginPath();
                 ctx.arc((1 + pts[i][0] / 2) * cnv.width / 2, (1 - pts[i][1] / 2) * cnv.height / 2, radius, 0, 2 * Math.PI);
                 ctx.fill();
@@ -118,8 +124,69 @@
             
             initDrag(canvas, context);
         };
+
+
+        var __minv__ = 0, __maxv__ = 12, 
+        __ndotshor__ = 100, __ndotsver__ = 100, __radius__ = 6;
+        function mapperFunc(arglist) {
+            if (arglist.length != 3) {
+                throw new Error('Invalid number of arguments');
+            }
+            let [x, y, z] = arglist;
+            return (x * x + y * y + z * z);
+            //return Math.sin(x) + Math.sin(y) + Math.sin(z);
+        }
+
+        function distance(pt1, pt2) {
+            return Math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2);
+        }
+
+        function val2color_rb(val, minv, maxv) {
+            let range = maxv - minv;
+            let ratio = (val - minv) / range;
+            let r = Math.floor(255 * ratio);
+            let b = Math.floor(255 * (1 - ratio));
+            return `rgb(${r}, 50, ${b})`;
+        }
+
+        function polydimHandler(cnv, ctx) {
+            let triangle = ctx.triangles[0];
+            // let x_min = x_max = triangle[0][0];
+            // let y_min = y_max = triangle[0][1];
+            // for (let i = 1; i < 3; i++) {
+            //     x_min = Math.min(x_min, triangle[i][0]);
+            //     x_max = Math.max(x_max, triangle[i][0]);
+            //     y_min = Math.min(y_min, triangle[i][1]);
+            //     y_max = Math.max(y_max, triangle[i][1]);
+            // }
+            
+            // draw mapperFunc values based on:
+            //    x = <distance from triangle[0]
+            //    y = <distance from triangle[1]
+            //    z = <distance from triangle[2]
+
+            let ndots_hor = __ndotshor__, ndots_ver = __ndotsver__;
+            let x_min = -2, x_max = 2, y_min = -2, y_max = 2;
+
+            for (let i = 0; i < ndots_hor; i++) {
+                for (let j = 0; j < ndots_ver; j++) {
+                    let a = x_min + (x_max - x_min) * i / ndots_hor;
+                    let b = y_min + (y_max - y_min) * j / ndots_ver;
+                    
+                    let x = distance(triangle[0], [a, b]);
+                    let y = distance(triangle[1], [a, b]);
+                    let z = distance(triangle[2], [a, b]);
+
+                    let val = mapperFunc([x, y, z]);                    
+                    ctx.fillStyle = val2color_rb(val, __minv__, __maxv__);
+                    dot(cnv, ctx, [a, b], __radius__);
+                }
+            }
+        }
+
         function updateCanvas(cnv, ctx) {
             darknessPrime(cnv, ctx);
+            polydimHandler(cnv, ctx);
             for (let i = 0; i < ctx.triangles.length; i++) {
                 triangle(cnv, ctx, ctx.triangles[i], true);
             }
