@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Adjustable</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <style>
+        body {
+            overflow: hidden;
+        }
+
+        canvas {
+            position: absolute;
+        }
+
+        #canvas {
+            left: 0;
+            top: 0;
+            width: 100vh;
+            height: 99.4vh;
+            border: solid purple;
+            /*z-index: 1;*/
+        }
+    </style>
+    <canvas id='canvas'></canvas>
+    <script>
+        var canvas, context;
+        var x_min = x_max = y_min = y_max = null;
+        var w, h;
+        var points = [];
+        var currPoint = null;
+
+        //////////
+
+        function triangle(cnv, ctx, pts, ignore=false) {
+            var radius = 20;
+            for (let i = 0; i < 3; i++) {
+                ctx.fillStyle=['red','green','blue'][i];
+                ctx.beginPath();
+                ctx.arc((1 + pts[i][0] / 2) * cnv.width / 2, (1 - pts[i][1] / 2) * cnv.height / 2, radius, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            //ctx.strokeStyle = `rgb(${this.colors[index][0]}, ${this.colors[index][1]}, ${this.colors[index][2]})`;
+            ctx.strokeStyle = '#FFF';
+            ctx.beginPath();
+            ctx.moveTo((1 + pts[0][0] / 2) * cnv.width / 2, (1 - pts[0][1] / 2) * cnv.height / 2);
+            ctx.lineTo((1 + pts[1][0] / 2) * cnv.width / 2, (1 - pts[1][1] / 2) * cnv.height / 2);
+            ctx.lineTo((1 + pts[2][0] / 2) * cnv.width / 2, (1 - pts[2][1] / 2) * cnv.height / 2);
+            ctx.closePath();
+            ctx.stroke();
+            //ctx.triangles.push(this.funcs_triangles[index]); //reference
+            if (!ignore) ctx.triangles.push(pts);//reference
+        }
+
+        function darkness() {
+            context.fillStyle = '#000';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = '#FFF';
+        }
+        function darkness1() { //obsolete, use darknessPrime instead
+            context1.fillStyle = '#333';
+            context1.fillRect(0, 0, canvas1.width, canvas1.height);
+            context1.strokeStyle = '#000';
+            context1.beginPath();
+            context1.moveTo(canvas1.width / 2, 0);
+            context1.lineTo(canvas1.width / 2, canvas1.height);
+            context1.stroke();
+            context1.moveTo(0, canvas1.height / 2);
+            context1.lineTo(canvas1.width, canvas1.height / 2);
+            context1.stroke();
+        }
+        function darkness2() { //obsolete, use darknessPrime instead
+            context2.fillStyle = '#333';
+            context2.fillRect(0, 0, canvas2.width, canvas2.height);
+            context2.strokeStyle = '#000';
+            context2.beginPath();
+            context2.moveTo(canvas2.width / 2, 0);
+            context2.lineTo(canvas2.width / 2, canvas2.height);
+            context2.stroke();
+            context2.moveTo(0, canvas2.height / 2);
+            context2.lineTo(canvas2.width, canvas2.height / 2);
+            context2.stroke();
+        }
+        function darknessPrime(cnv, ctx) {
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, 0, cnv.width, cnv.height);
+            ctx.strokeStyle = '#000';
+            ctx.beginPath();
+            ctx.moveTo(cnv.width / 2, 0);
+            ctx.lineTo(cnv.width / 2, cnv.height);
+            ctx.stroke();
+            ctx.moveTo(0, cnv.height / 2);
+            ctx.lineTo(cnv.width, cnv.height / 2);
+            ctx.stroke();
+        }
+        function darkness3() {
+            context3.fillStyle = '#333';
+            context3.fillRect(0, 0, canvas3.width, canvas3.height);
+            context3.fillStyle = '#FFF';
+            context3.beginPath();
+            context3.arc(canvas3.width / 2, canvas3.height / 2, 0.8 * canvas3.width / 2, 0, 2 * Math.PI);
+            context3.stroke();
+            context3.fill();
+        }
+
+        window.onload = function () {
+            canvas = document.getElementById('canvas');
+            canvas.width = canvas.height = 1000;
+            w = canvas.width, h = canvas.height;
+            context = canvas.getContext('2d');            
+            context.triangles = [];
+
+            triangle(canvas, context, [[-1, -1], [1, -1], [0, 1]]);
+            updateCanvas(canvas, context);
+            
+            initDrag(canvas, context);
+        };
+        function updateCanvas(cnv, ctx) {
+            darknessPrime(cnv, ctx);
+            for (let i = 0; i < ctx.triangles.length; i++) {
+                triangle(cnv, ctx, ctx.triangles[i], true);
+            }
+        }
+        
+        function initDrag(cnv, ctx) {
+            var radius = 20;
+            cnv.addEventListener('mousedown', (e) => {
+                //console.log(e.offsetX, e.offsetY);
+                //console.log(getMousePos(cnv1,e));
+                let mousepos = getMousePos(cnv, e);
+                for (let i = 0; i < ctx.triangles.length; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        //window.ok = [[(1 + ctx.triangles[i][j][0] / 2) * cnv.width / 2, (1 - ctx.triangles[i][j][1] / 2) * cnv.height / 2], mousepos];
+                        if (((1 + ctx.triangles[i][j][0] / 2) * cnv.width / 2 - mousepos.x) ** 2 + ((1 - ctx.triangles[i][j][1] / 2) * cnv.height / 2 - mousepos.y) ** 2 < radius*radius) {
+                            window.currPoint = ctx.triangles[i][j];
+                            break;
+                        }
+                    }
+                }
+                if (window.currPoint == null) return;
+                window.currPoint[0] = (mousepos.x/cnv.width*2-1)*2;
+                window.currPoint[1] = ((1-mousepos.y/cnv.height)*2-1)*2;
+                updateCanvas(canvas, context)
+            });
+            cnv.addEventListener('mousemove', (e) => {
+                if (window.currPoint == null) return;
+                //alert('uu');
+                let mousepos = getMousePos(cnv, e);
+                window.currPoint[0] = (mousepos.x/cnv.width*2-1)*2;
+                window.currPoint[1] = ((1-mousepos.y/cnv.height)*2-1)*2;
+                updateCanvas(canvas, context);
+            });
+            cnv.addEventListener('mouseup', (e) => {
+                if (currPoint == null) return;
+                let mousepos = getMousePos(cnv, e);
+                window.currPoint[0] = (mousepos.x/cnv.width*2-1)*2;
+                window.currPoint[1] = ((1-mousepos.y/cnv.height)*2-1)*2;
+                updateCanvas(canvas, context);        
+                window.currPoint = null;
+            });
+        }
+        
+        // STACKOVERFLOW mouse position getter
+        function getMousePos(cnv, evt) {
+            var rect = cnv.getBoundingClientRect(), // abs. size of element
+                scaleX = cnv.width / rect.width,    // relationship bitmap vs. element for X
+                scaleY = cnv.height / rect.height;  // relationship bitmap vs. element for Y
+
+            return {
+                x: (evt.clientX - rect.left) * scaleX,   // scale mouse coordinates after they have
+                y: (evt.clientY - rect.top) * scaleY     // been adjusted to be relative to element
+            }
+        }
+        /*function getMousePos(canvas, evt) {
+            var rect = canvas.getBoundingClientRect();
+            return {
+                x: evt.clientX - rect.left,
+                y: evt.clientY - rect.top
+            };
+        }*/
+
+    </script>
+</body>
+
+</html>
