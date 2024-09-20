@@ -41,54 +41,38 @@
             ctx.fill();
         }
 
-        function triangle(cnv, ctx, pts, ignore=false) {
+        function polygon(cnv, ctx, pts, ignore=false) {
             var radius = 20;
-            for (let i = 0; i < 3; i++) {
-                ctx.fillStyle=['magenta','green','blue'][i];
+            for (let i = 0; i < pts.length; i++) {
+                //ctx.fillStyle=['magenta','green','blue'][i];
+                ctx.fillStyle = 'green';
                 ctx.beginPath();
                 ctx.arc((1 + pts[i][0] / 2) * cnv.width / 2, (1 - pts[i][1] / 2) * cnv.height / 2, radius, 0, 2 * Math.PI);
                 ctx.fill();
+                // draw index number in the circle
+                ctx.fillStyle = '#FFF';
+                ctx.font = '20px Arial';
+                let text = `x${i}`;
+                ctx.fillText(text, (1 + pts[i][0] / 2) * cnv.width / 2 - 10, (1 - pts[i][1] / 2) * cnv.height / 2 + 10);
             }
             //ctx.strokeStyle = `rgb(${this.colors[index][0]}, ${this.colors[index][1]}, ${this.colors[index][2]})`;
             ctx.strokeStyle = '#FFF';
             ctx.beginPath();
-            ctx.moveTo((1 + pts[0][0] / 2) * cnv.width / 2, (1 - pts[0][1] / 2) * cnv.height / 2);
-            ctx.lineTo((1 + pts[1][0] / 2) * cnv.width / 2, (1 - pts[1][1] / 2) * cnv.height / 2);
-            ctx.lineTo((1 + pts[2][0] / 2) * cnv.width / 2, (1 - pts[2][1] / 2) * cnv.height / 2);
+            ctx.moveTo((1 + pts[0][0] / 2) * cnv.width / 2, (1 - pts[0][1] / 2) * cnv.height / 2); 
+            // ctx.lineTo((1 + pts[1][0] / 2) * cnv.width / 2, (1 - pts[1][1] / 2) * cnv.height / 2);
+            // ctx.lineTo((1 + pts[2][0] / 2) * cnv.width / 2, (1 - pts[2][1] / 2) * cnv.height / 2);
+            for (let i = 1; i < pts.length; i++) {
+                ctx.lineTo((1 + pts[i][0] / 2) * cnv.width / 2, (1 - pts[i][1] / 2) * cnv.height / 2);
+            }
             ctx.closePath();
             ctx.stroke();
-            //ctx.triangles.push(this.funcs_triangles[index]); //reference
-            if (!ignore) ctx.triangles.push(pts);//reference
+            if (!ignore) ctx.polygons.push(pts);//reference
         }
 
         function darkness() {
             context.fillStyle = '#000';
             context.fillRect(0, 0, canvas.width, canvas.height);
             context.fillStyle = '#FFF';
-        }
-        function darkness1() { //obsolete, use darknessPrime instead
-            context1.fillStyle = '#333';
-            context1.fillRect(0, 0, canvas1.width, canvas1.height);
-            context1.strokeStyle = '#000';
-            context1.beginPath();
-            context1.moveTo(canvas1.width / 2, 0);
-            context1.lineTo(canvas1.width / 2, canvas1.height);
-            context1.stroke();
-            context1.moveTo(0, canvas1.height / 2);
-            context1.lineTo(canvas1.width, canvas1.height / 2);
-            context1.stroke();
-        }
-        function darkness2() { //obsolete, use darknessPrime instead
-            context2.fillStyle = '#333';
-            context2.fillRect(0, 0, canvas2.width, canvas2.height);
-            context2.strokeStyle = '#000';
-            context2.beginPath();
-            context2.moveTo(canvas2.width / 2, 0);
-            context2.lineTo(canvas2.width / 2, canvas2.height);
-            context2.stroke();
-            context2.moveTo(0, canvas2.height / 2);
-            context2.lineTo(canvas2.width, canvas2.height / 2);
-            context2.stroke();
         }
         function darknessPrime(cnv, ctx) {
             ctx.fillStyle = '#333';
@@ -102,14 +86,16 @@
             ctx.lineTo(cnv.width, cnv.height / 2);
             ctx.stroke();
         }
-        function darkness3() {
-            context3.fillStyle = '#333';
-            context3.fillRect(0, 0, canvas3.width, canvas3.height);
-            context3.fillStyle = '#FFF';
-            context3.beginPath();
-            context3.arc(canvas3.width / 2, canvas3.height / 2, 0.8 * canvas3.width / 2, 0, 2 * Math.PI);
-            context3.stroke();
-            context3.fill();
+
+        var __minv__ = 0, __maxv__ = 4, 
+        __ndotshor__ = 100, __ndotsver__ = 100, __radius__ = 6;
+        function mapperFunc(arglist) {
+            if (arglist.length != 4) {
+                throw new Error('Invalid number of arguments');
+            }
+            let [x, y, z, w] = arglist;
+            //return (x * x + y * y + z * z + w * w);
+            return Math.sin(x*y*z*w)**80 + Math.cos(y)**80 + Math.sin(z)**80 + Math.sin(w)**80;
         }
 
         window.onload = function () {
@@ -117,25 +103,13 @@
             canvas.width = canvas.height = 1000;
             w = canvas.width, h = canvas.height;
             context = canvas.getContext('2d');            
-            context.triangles = [];
+            context.polygons = [];
 
-            triangle(canvas, context, [[-1, -1], [1, -1], [0, 1]]);
+            polygon(canvas, context, [[-1, -1], [1, -1], [0, 1], [0, 0]]);
             updateCanvas(canvas, context);
             
             initDrag(canvas, context);
         };
-
-
-        var __minv__ = 0, __maxv__ = 12, 
-        __ndotshor__ = 100, __ndotsver__ = 100, __radius__ = 6;
-        function mapperFunc(arglist) {
-            if (arglist.length != 3) {
-                throw new Error('Invalid number of arguments');
-            }
-            let [x, y, z] = arglist;
-            return (x * x + y * y + z * z);
-            //return Math.sin(x) + Math.sin(y) + Math.sin(z);
-        }
 
         function distance(pt1, pt2) {
             return Math.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2);
@@ -150,20 +124,20 @@
         }
 
         function polydimHandler(cnv, ctx) {
-            let triangle = ctx.triangles[0];
-            // let x_min = x_max = triangle[0][0];
-            // let y_min = y_max = triangle[0][1];
+            let polygon = ctx.polygons[0];
+            // let x_min = x_max = polygon[0][0];
+            // let y_min = y_max = polygon[0][1];
             // for (let i = 1; i < 3; i++) {
-            //     x_min = Math.min(x_min, triangle[i][0]);
-            //     x_max = Math.max(x_max, triangle[i][0]);
-            //     y_min = Math.min(y_min, triangle[i][1]);
-            //     y_max = Math.max(y_max, triangle[i][1]);
+            //     x_min = Math.min(x_min, polygon[i][0]);
+            //     x_max = Math.max(x_max, polygon[i][0]);
+            //     y_min = Math.min(y_min, polygon[i][1]);
+            //     y_max = Math.max(y_max, polygon[i][1]);
             // }
             
             // draw mapperFunc values based on:
-            //    x = <distance from triangle[0]
-            //    y = <distance from triangle[1]
-            //    z = <distance from triangle[2]
+            //    x = <distance from polygon[0]
+            //    y = <distance from polygon[1]
+            //    z = <distance from polygon[2]
 
             let ndots_hor = __ndotshor__, ndots_ver = __ndotsver__;
             let x_min = -2, x_max = 2, y_min = -2, y_max = 2;
@@ -173,11 +147,15 @@
                     let a = x_min + (x_max - x_min) * i / ndots_hor;
                     let b = y_min + (y_max - y_min) * j / ndots_ver;
                     
-                    let x = distance(triangle[0], [a, b]);
-                    let y = distance(triangle[1], [a, b]);
-                    let z = distance(triangle[2], [a, b]);
+                    // let x = distance(polygon[0], [a, b]);
+                    // let y = distance(polygon[1], [a, b]);
+                    // let z = distance(polygon[2], [a, b]);
+                    let d = []; // dim vals
+                    for (let k = 0; k < polygon.length; k++) {
+                        d.push(distance(polygon[k], [a, b]));
+                    }
 
-                    let val = mapperFunc([x, y, z]);                    
+                    let val = mapperFunc(d);                    
                     ctx.fillStyle = val2color_rb(val, __minv__, __maxv__);
                     dot(cnv, ctx, [a, b], __radius__);
                 }
@@ -187,8 +165,8 @@
         function updateCanvas(cnv, ctx) {
             darknessPrime(cnv, ctx);
             polydimHandler(cnv, ctx);
-            for (let i = 0; i < ctx.triangles.length; i++) {
-                triangle(cnv, ctx, ctx.triangles[i], true);
+            for (let i = 0; i < ctx.polygons.length; i++) {
+                polygon(cnv, ctx, ctx.polygons[i], true);
             }
         }
         
@@ -198,11 +176,10 @@
                 //console.log(e.offsetX, e.offsetY);
                 //console.log(getMousePos(cnv1,e));
                 let mousepos = getMousePos(cnv, e);
-                for (let i = 0; i < ctx.triangles.length; i++) {
-                    for (let j = 0; j < 3; j++) {
-                        //window.ok = [[(1 + ctx.triangles[i][j][0] / 2) * cnv.width / 2, (1 - ctx.triangles[i][j][1] / 2) * cnv.height / 2], mousepos];
-                        if (((1 + ctx.triangles[i][j][0] / 2) * cnv.width / 2 - mousepos.x) ** 2 + ((1 - ctx.triangles[i][j][1] / 2) * cnv.height / 2 - mousepos.y) ** 2 < radius*radius) {
-                            window.currPoint = ctx.triangles[i][j];
+                for (let i = 0; i < ctx.polygons.length; i++) {
+                    for (let j = 0; j < ctx.polygons[i].length; j++) {
+                        if (((1 + ctx.polygons[i][j][0] / 2) * cnv.width / 2 - mousepos.x) ** 2 + ((1 - ctx.polygons[i][j][1] / 2) * cnv.height / 2 - mousepos.y) ** 2 < radius*radius) {
+                            window.currPoint = ctx.polygons[i][j];
                             break;
                         }
                     }
